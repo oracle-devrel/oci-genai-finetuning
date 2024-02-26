@@ -1,5 +1,15 @@
 import ujson as json
 
+'''
+@author jasperan
+this script reads finance_data.json, and changes the format to 
+adapt to what OCI Generative AI Service expects, an object with type
+{
+    'prompt': str(),
+    'completion': str()
+}
+'''
+
 # this list will store all objects before writing into the output file.
 json_list = list()
 
