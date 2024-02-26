@@ -1,213 +1,124 @@
-# oci-genai-finetuning
+# OCI LLM Finetuning with OCI Generative AI Service
 
 [![License: UPL](https://img.shields.io/badge/license-UPL-green)](https://img.shields.io/badge/license-UPL-green) [![Quality gate](https://sonarcloud.io/api/project_badges/quality_gate?project=oracle-devrel_oci-genai-finetuning)](https://sonarcloud.io/dashboard?id=oracle-devrel_oci-genai-finetuning)
 
-# OCI Language and Batch Translation 
-
-## Overview of the service
-
-This is an overview of what Oracle Cloud Infrastructure Vision (a.k.a. OCI Vision) is, what it can provide, and how it can be used to your advantage as a company or individual trying to work with Artificial Intelligence.
-
-Of course, the domain we're going to observe is specifically going to focus on Computer Vision, a branch of Artificial Intelligence, that aims to use visual data to automate, or improve the quality of an application.
-
-OCI Vision is a versatile service that focuses on this. We (the users) can access these services in the following ways:
-Generative AI Service
-
-Unlock the power of generative AI models equipped with advanced language comprehension for building the next generation of enterprise applications. Oracle Cloud Infrastructure (OCI) Generative AI is a fully managed service available via API to seamlessly integrate these versatile language models into a wide range of use cases, including writing assistance, summarization, and chat.
-
-- Using an OCI SDK: seamless interaction with your favorite programming language, without needing to create your own custom implementation / framework.
-- Using the OCI Console: easy-to-use, browser-based interface, by accessing your OCI account and using the services with the web interface provided by Oracle.
-- Using the OCI Command-Line Interface (CLI): Quick access and full functionality without programming. The CLI is a package that allows you to use a terminal to operate with OCI.
-- Using a RESTful API: Maximum functionality, requires programming expertise. (through requests)
-
-The capabilities of OCI Vision can be divided into two:
-
-- Document AI, or document processing: focuses on extracting or processing data from documents (usually readable)
-- Image AI: focuses on detecting elements of an image, like objects, segments of the image...
-
-These are some of the capabilities we can find in OCI Vision:
-
-- Object Detection: Identify objects like people, cars, and trees in images, returning bounding box coordinates (meaning, a rectangle of varying size, depending on the object). (Image AI)
-- Image Classification: categorize objects in images. (Image AI)
-- Optical Character Recognition (OCR): Locate and digitize text in images. (Document AI)
-- Face Recognition: detecting faces in images and key points in faces, which can be later used to process the face's mood, position... (Image AI)
-
-If you're unhappy with the set of elements being recognized in OCI Vision, or you're trying to detect something in images that is uncommon / not real (e.g. a character in a Disney movie, or a new species of animal), you can also create your own *Custom Model*:
-
-- Custom Object Detection: build models to detect custom objects with bounding box coordinates.
-- Custom Image Classification: create models to identify specific objects and scene-based features.
-
-### Document AI
-
-> **Note**: Document AI features are available until January 1, 2024. Post that, they will be available in another OCI service called OCI Document Understanding.
-
-There are lots of things that we can extract from a document: information from receipts (prices, dates, employees...), tabular data (if the document has tables/spreadsheets on it), or simply text contained in a document.
-
-All of this is specially useful for retail or HR companies, to manage their inventories, transactions, and manage their resources and activities more efficiently. It can also generate searchable, summarized PDFs from all this data, uploaded to the Cloud and accessible anywhere.
-
-### Supported File Formats
-
-Here's a list of supported file formats:
-
-- JPG
-- PNG
-- JPEG
-- PDF
-- TIFF (great for iOS enthusiasts)
-
-Oracle Cloud Infrastructure Vision is a robust, flexible and cost-effective service for Computer Vision tasks. Oh, and extremely speedy!
-
-Whether you're dealing with images or documents, OCI Vision has all the tools you need, so make sure to give them a try.
-
 ## Introduction
 
-This project teaches you how to develop an AI-infused application with OCI Vision. For this project, we will be using OCI's Python SDK to invoke the OCI Vision service and get results on detections. We have prepared several scripts, which can be found in the `scripts` folder, to make the appropriate calls to the service, regarding Image Classification and Object Detection.
+Nowadays, when we are working with Large Language Models (LLMs), we typically have the model respond to the training data it has given. However, training these models are very hard; not only do they use a lot of resources (which racks up the amount of $$ you need to spend on electricity and hardware), but modifying these behaviors can be quite complex and not-straightforward.
 
-Finally, this demo also has an implementation of Object Detection with `ThreadPools`, to automate this process and allow you to process whole video files by separating the video into frames and calling the Object Detection endpoint for each frame; then, recomposing all frames into an output video file.
+Thankfully, there are some Neural Network implementation optimizations nowadays, that allow us to do a "smaller training" version of the model with some custom data. This is called **finetuning**.
+
+Typically, finetuning is great when you want to do one of these three things:
+
+- Either change the behavior of the base model in some way (e.g. make this base model behave like a specific celebrity)
+- Change the interactions with the model (e.g. let the model know we want short/long answers, telling the model how to interact with the user)
+- In some cases, adding **vast** amounts of information that the base model didn't have (e.g. giving the model 5,000 prompt-response interactions so it learns about a specific topic very deeply). We would need as much data as possible (like [this question + answering model](https://www.kaggle.com/datasets/stanfordu/stanford-question-answering-dataset)) to do this.
+
+> **Note**: if you're interested in Q&A dataset, check out [this guide's annex](https://github.com/jasperan/llm-discord/blob/main/hands-on/guide.md) I wrote a while ago with a compiled list of the best datasets for this task.
+
+In our case, we will show this demo focusing on option 3: we have lots of prompt-response key-value pairs, and we will modify the behavior of our original `LLaMA-2-70B` to hyper-specialize it. With the help of the OCI Generative AI Service, we will create custom models by fine-tuning the base models with our own prompt-response dataset. We can create new custom models or create new versions of existing custom models.
+
+This is the process we will follow to perform finetuning:
+
+![Process for finetuning](./img/finetuning.png)
 
 ## 0. Prerequisites and setup
 
 - Oracle Cloud Infrastructure (OCI) Account
-- [Oracle Cloud Infrastructure Documentation - Vision](https://docs.oracle.com/en-us/iaas/Content/vision/using/home.htm)
-- [Oracle Cloud Infrastructure (OCI) Generative AI Service SDK - Oracle Cloud Infrastructure Python SDK](https://pypi.org/project/oci/)
+- [Oracle Cloud Infrastructure Documentation - Generative AI Service](https://docs.oracle.com/en-us/iaas/Content/vision/using/home.htm)
 - [Python 3.10](https://www.python.org/downloads/release/python-3100/)
 - [Conda](https://conda.io/projects/conda/en/latest/user-guide/install/index.html)
-- [OCI SDK](https://docs.oracle.com/en-us/iaas/Content/API/Concepts/sdkconfig.htm)
 
-Follow these links below to generate a config file and a key pair in your ~/.oci directory:
+For this demo, we will use the OCI Console to access the service and interact with the Finetuning AI Cluster to perform finetuning operations. (You don't need Python or to install the OCI SDK for Python.)
 
-- [SDK Config](https://docs.oracle.com/en-us/iaas/Content/API/Concepts/sdkconfig.htm)
-- [API Signing Key](https://docs.oracle.com/en-us/iaas/Content/API/Concepts/apisigningkey.htm)
-- [SDK CLI Installation](https://docs.oracle.com/en-us/iaas/Content/API/SDKDocs/cliinstall.htm#configfile)
+## 1. Create the training dataset
 
-After completion, you should have following 2 things in your ~/.oci directory:
+In our case, we are going to create a finetuned, hyper-knowledgeable version of `LLaMA-2-70B` about Finance. Take a look at the introduction if you want to discover [how I found the original dataset.](https://huggingface.co/datasets/gbharti/finance-alpaca/raw/main/Cleaned_date.json)
 
-- A config file(where key file point to private key:key_file=~/.oci/oci_api_key.pem)
-- A key pair named oci_api_key.pem and oci_api_key_public.pem
-- Now make sure you change the reference of key file in config file (where key file point to private key:key_file=/YOUR_DIR_TO_KEY_FILE/oci_api_key.pem)
+Since the AI community has a lot of open-source projects and resources, we don't need to manually curate the finance dataset ourselves: we'll reuse someone elses' finance dataset and finetune on top of it.
 
-> **Note**: if you have saved your OCI config file somewhere else, make sure to reference this location in `scripts/video_processing.py`, line 156:
-
-```python
-config = oci.config.from_file(
-             oci.config.DEFAULT_LOCATION,
-             (config_profile if config_profile else oci.config.DEFAULT_PROFILE),
-        )
-```
-
-And change it to:
-
-```python
-config = oci.config.from_file(
-             "<NEW_LOCATION>",
-             (config_profile if config_profile else oci.config.DEFAULT_PROFILE),
-        )
-```
-
-Finally, we install Python dependencies:
-
-```sh
-pip install -r requirements.txt
-```
-
-Then, we will create a Bucket in our OCI tenancy, and upload the pictures we want to analyze over there. This will ultimately depend on your use case, if you're trying to count the number of objects in an image (for traffic management), count people (for access management)... You will have to decide.
-
-## 1. Create OCI Bucket
-
-Let's create the Bucket:
-
-1. Open the **Navigation** menu in the Oracle Cloud console and click **Storage**. Under **Object Storage & Archive Storage**, click **Buckets**.
-
-2. On the **Buckets** page, select the compartment where you want to create the bucket from the **Compartment** drop-down list in the **List Scope** section. Make sure you are in the region where you want to create your bucket.
-
-3. Click **Create Bucket**.
-
-4. In the **Create Bucket** panel, specify the following:
-    - **Bucket Name:** Enter a meaningful name for the bucket.
-    - **Default Storage Tier:** Accept the default **Standard** storage tier. Use this tier for storing frequently accessed data that requires fast and immediate access. For infrequent access, choose the **Archive** storage tier.
-    - **Encryption:** Accept the default **Encrypt using Oracle managed keys**.
-
-5. Click **Create** to create the bucket.
-
-  ![The completed Create Bucket panel is displayed.](./img/create-bucket-panel.png)
-
-The new bucket is displayed on the **Buckets** page.
-
-  ![The new bucket is displayed on the Buckets page.](./img/bucket-created.png)
-
-## 1. (Optional) Running Image Classification with Object Storage
-
-We will run `scripts/image_classification.py`, but before, we need to obtain some info from our OCI Bucket and replace it in our script, line 37:
-
-![Information needed from bucket](./img/info_needed_bucket.PNG)
-
-Then, we can just run the following command:
+To download the Finance dataset, run the following command in a terminal:
 
 ```bash
-python image_classification.py
+curl -O https://huggingface.co/datasets/gbharti/finance-alpaca/raw/main/Cleaned_date.json
 ```
 
-To run OCI Vision's image classification against that image. These results will be in JSON format.
+Now that we have our data, we need to modify it into the expected format by OCI. As per the instructions in the docs, the proper structure for the data is a JSONL file (or JSON Lines) file is a file that contains a new JSON value or object on each line. The file isn't evaluated as a whole, like a regular JSON file, but rather, each line is treated as if it was a separate JSON file. This format lends itself well for storing a set of inputs in JSON format. The OCI Generative AI service accepts a JSONL file for fine-tuning custom models in the following format:
 
-## 2. (Optional) Running Object Detection with Object Storage
+```json
+{"prompt": "<first prompt>", "completion": "<expected completion given first prompt>"}
+{"prompt": "<second prompt>", "completion": "<expected completion given second prompt>"}
+```
 
-We will repeat the steps to obtain the information as in step 1 above:
-
-![Information needed from bucket for Object Detection](./img/info_needed_bucket_object_detection.PNG)
-
-Then we can proceed and run the following command:
+I have created a script to perform this conversion. To run the converter, execute the following command:
 
 ```bash
-python object_detection.py
+cd scripts/
+python preprocess_json.py
 ```
 
-And we'll obtain a JSON object detailing detections.
+> **Note**: make sure you have your `data/` directory with the `finance_data.json` file within it.
 
-Optionally, you can uncomment the block starting in line 107, to visualize these results. Note that you must have the file locally and reference it in order to draw detections on top of the local image:
+Now that we have our training dataset, we're ready for the next step.
 
-![Uncomment this code block](./img/codeblock_uncomment.PNG)
+## 2. Add dataset to Object Storage bucket
 
-## 3. Batch processing any video with OCI Vision
+After creating a Bucket in our OCI tenancy:
 
-We have prepared two different scripts for you:
+![Bucket Status](./img/bucket_1.PNG)
 
-- One script will generate an output MP4 file with results inserted into it.
-- The other script will process the video frame-by-frame, process detections into a single `.json` file, but won't produce an output file. It's a way to learn how to invoke the service and aggregate results.
+We can now upload objects into it - in our case, we put our JSONL-formatted data into this bucket:
 
-### Run Detector
+![Uploading Item](./img/bucket_2.PNG)
 
-```bash
-python detector_video.py [-h] --video-file VIDEO_FILE [--model-id MODEL_ID] 
-    [--output-frame-rate OUTPUT_FRAME_RATE] [--confidence-threshold CONFIDENCE_THRESHOLD] [-v]
-```
+## 3. Create a fine-tuning dedicated AI cluster
 
-For example, in my case, where I want only to draw objects above 80% model confidence, 30 frames per second (in my output video), and using the standard OCI Vision model (not a custom one), I would run:
+1. In the navigation bar of the Console, choose a region that hosts Generative AI, for example, US Midwest (Chicago). If you don't know which region to choose, see Regions with Generative AI.
+2. Open the navigation menu and click **Analytics & AI**. Under **AI Services**, click **Generative AI**.
+3. In the left navigation, choose a compartment that you have permission to work in.
+4. Click **Dedicated AI clusters**.
+5. Click **Create** dedicated AI cluster.
+6. Select a compartment to create the dedicated AI cluster in. The default compartment is the one you selected in step 3, but you can select any compartment that you have permission to work in.
 
-```bash
-python detector_video.py --video-file="H:/Downloads/my_video.mp4" --output-frame-rate="30" --confidence-threshold="80" -v
-```
+For **Cluster** type, click Fine-tuning.
 
-### Create Output Video (CPU-intensive)
+For **Base** model, choose the base model for the custom model that you want to fine-tune on this cluster:
 
-```bash
-python video_processer.py --file FILE_PATH
-```
+- Cohere.command: Provisions two Large Cohere units.
+- Cohere.command-light: Provisions two Small Cohere units.
 
-For example:
+![Cluster creation](./img/cluster.PNG)
 
-```bash
-python video_processer.py --file="H:/Downloads/my_video.mp4" --mode="moderate"
-```
+> **Note**: When you create a dedicated AI cluster for fine-tuning, two units are created for the base model that you choose. Hosting a model requires at least one unit and fine-tuning requires two units, because fine-tuning a model requires more GPUs than hosting a model. The number of units for fine-tuning is hard-coded to two and you can't change it. You can use the same fine-tuning cluster to fine-tune several models.
+
+## 4. Create a new custom model on the fine-tuning dedicated AI cluster
+
+With our finetuning cluster, let's create a custom model. There are two training methods for finetuning available:
+
+- T-Few: recommended for small datasets (100,000- samples). Also, the most typical use case here is finetuning the base model to follow a different prompt format, or follow different instructions.
+- **Vanilla**: for large datasets (100,000-1M+ samples). Usually applied for complicated semantical understanding improvement (e.g. enhancing the model's understanding about a topic). This is the recommended type of training for our finance example.
+
+> **Note**: Using small datasets for the Vanilla method might cause overfitting. Overfitting happens when the trained model gives great results for the training data, but can't generalize outputs for unseen data. (Meaning, it didn't really learn a lot, it just hyperspecialized for the test data, but can't transfer that knowledge to all data in the dataset).
+
+## 5. Create a hosting dedicated AI cluster
+
+In order to consume our newly created model, we need to create a hosting dedicated AI cluster. This will expose the model as if it was an API - this means, we're using OCI as an API server that runs inference on our finetuned model.
+
+## 6. Create endpoint for the custom model
+
+TODO
+
+## 7. Run the custom model in the playground
+
+TODO steps https://docs.oracle.com/en-us/iaas/Content/generative-ai/fine-tune-models.htm
 
 ## Demo
 
-[OCI Vision Overview - Exploring the Service](https://www.youtube.com/watch?v=eyJm7OlaRBk&list=PLPIzp-E1msraY9To-BB-vVzPsK08s4tQD&index=4)
+TODO
 
 ## Tutorial
 
-Here’s an use case being solved with OCI Vision + Python:
-
-[App Pattern: OCI Vision Customized Object Detector in Python](https://www.youtube.com/watch?v=B9EmMkqnoGQ&list=PLPIzp-E1msraY9To-BB-vVzPsK08s4tQD&index=2)
+TODO
 
 ## Physical Architecture
 
