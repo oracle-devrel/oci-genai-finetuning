@@ -34,3 +34,4 @@ Temporary Items
 
 # ignore finance data (read how-to instructions on how to download it)
 data/finance_data.json
+data/output.jsonl
