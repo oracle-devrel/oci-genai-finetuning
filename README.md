@@ -145,6 +145,10 @@ After selecting the newly created finance_expert (finetuned version of Cohere Li
 
 ![Playground - Generations](./img/playground_generations.PNG)
 
+If you're wondering why the text is highlighted, it's due to the likelihoods hyperparameters:
+
+![Likelihoods](./img/likelihoods.PNG)
+
 We've successfully finetuned a model to adapt a new behavior to its knowledge base!
 
 ## Demo
