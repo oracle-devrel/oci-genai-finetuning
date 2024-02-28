@@ -129,7 +129,7 @@ After creation, we can proceed to create the endpoint:
 
 ![Hosting AI Cluster - 2](./img/hosting_2.PNG)
 
-> **Note**: you can enable or disable a content moderation filter. This is useful if you want to filter out any potentially harmful or sensitive content from your model.
+> **Note**: you can enable or disable a content moderation filter. This is useful if you want to filter out any potentially harmful or sensitive content from your model. Also, you'll be able to see how many requests left you have available in your hosting endpoint by looking at its remaining capacity.
 
 ![Finished Hosting](./img/finished_hosting.PNG)
 
