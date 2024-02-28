@@ -119,6 +119,8 @@ After creation, we can observe the model's performance here:
 
 In order to consume our newly created model, we need to create a hosting dedicated AI cluster. This will expose the model as if it was an API - this means, we're using OCI as an API server that runs inference on our finetuned model.
 
+> **Note**: take a look at [these docs](https://docs.oracle.com/en-us/iaas/api/#/en/generative-ai-inference/20231130/) to learn about invoking the model through the Inference API.
+
 The first time you run the creation of an endpoint, it will check whether you already have a dedicated hosting AI Cluster created. If you don't, it will prompt you to create one:
 
 ![Hosting AI Cluster](./img/hosting.PNG)
