@@ -41,7 +41,7 @@ Since the AI community has a lot of open-source projects and resources, we don't
 To download the Finance dataset, run the following command in a terminal:
 
 ```bash
-curl -O https://huggingface.co/datasets/gbharti/finance-alpaca/raw/main/Cleaned_date.json
+curl -O https://huggingface.co/datasets/gbharti/finance-alpaca/resolve/main/Cleaned_date.json?download=true
 ```
 
 Now that we have our data, we need to modify it into the expected format by OCI. As per the instructions in the docs, the proper structure for the data is a JSONL file (or JSON Lines) file is a file that contains a new JSON value or object on each line. The file isn't evaluated as a whole, like a regular JSON file, but rather, each line is treated as if it was a separate JSON file. This format lends itself well for storing a set of inputs in JSON format. The OCI Generative AI service accepts a JSONL file for fine-tuning custom models in the following format:

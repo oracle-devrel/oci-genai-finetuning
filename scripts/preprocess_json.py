@@ -36,4 +36,3 @@ with open('../data/output.jsonl', 'w') as output_file:
         except Exception as e:
             print(e)
             pass
-            
