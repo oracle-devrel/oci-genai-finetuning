@@ -157,6 +157,8 @@ We've successfully finetuned a model to adapt a new behavior to its knowledge ba
 
 TODO
 
+[Watch the demo here](https://www.youtube.com/watch?v=XD9u5Dn04WI&list=PLPIzp-E1msraY9To-BB-vVzPsK08s4tQD&index=12)
+
 ## Tutorial
 
 TODO
