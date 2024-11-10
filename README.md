@@ -16,7 +16,7 @@ Finetuning is ideal when you want to do one of these three things:
 
 > **Note**: If you're interested in Q&A dataset, check out [this guide's annex](https://github.com/jasperan/llm-discord/blob/main/hands-on/guide.md) that I wrote with a compiled list of the best datasets for this task.
 
-This demo will focus on option 3: We have lots of prompt-response key-value pairs, and we will modify the behavior of our original `Cohere Light` to hyper-specialize it. With the help of the OCI Generative AI Service, we will create custom models by fine-tuning the base models with our own prompt-response dataset. We can create new custom models or create new versions of existing custom models.
+In our case, we will show this demo focusing on option 3: we have lots of prompt-response key-value pairs, and we will modify the behavior of one of the available base models (like `meta.llama-3.1-70b-instruct`) to hyper-specialize it. With the help of the OCI Generative AI Service, we will create custom models by fine-tuning the base models with our own prompt-response dataset. We can create new custom models or create new versions of existing custom models.
 
 Here is the process we will follow to perform finetuning:
 
@@ -34,7 +34,7 @@ For this demo, we will use the OCI Console to access the service and interact wi
 
 ## 1. Create the training dataset
 
-In our case, we are going to create a finetuned, hyper-knowledgeable version of `Cohere Light` about Finance. Take a look at the introduction if you want to discover [how I found the original dataset.](https://huggingface.co/datasets/gbharti/finance-alpaca/raw/main/Cleaned_date.json)
+In our case, we are going to create a finetuned, hyper-knowledgeable version of `Llama 3.1` about Finance. Take a look at the introduction if you want to discover [how I found the original dataset.](https://huggingface.co/datasets/gbharti/finance-alpaca/raw/main/Cleaned_date.json)
 
 Since the AI community has a lot of open-source projects and resources, we don't need to manually curate the finance dataset ourselves: We'll reuse someone elses' finance dataset and finetune on top of it.
 
@@ -68,7 +68,7 @@ After creating a Bucket in our OCI tenancy:
 
 ![Bucket Status](./img/bucket_1.PNG)
 
-We can now upload objects into it - in our case, we put our JSONL-formatted data into this bucket:
+We can now upload objects into it. In our case, we put our JSONL-formatted data into this bucket:
 
 ![Uploading Item](./img/bucket_2.PNG)
 
@@ -83,10 +83,11 @@ We can now upload objects into it - in our case, we put our JSONL-formatted data
 
 For **Cluster** type, click Fine-tuning.
 
-For **Base** model, choose the base model for the custom model that you want to fine-tune on this cluster:
+For **Base** model, in the drop-down menu, you'll be able to select the model you desire. For development, I recommend you use a lighter model with a lower context size (like `command-r-16k`) and then scale up for production (and use `llama-3.1-70b-instruct`). Here's the current list of available models:
 
-- Cohere.command: Provisions two Large Cohere units.
-- Cohere.command-light: Provisions two Small Cohere units.
+![available models for finetuning](./img/available_finetuning_models.png)
+
+After selecting the appropriate model that fits your needs best, let's create the dedicated AI cluster:
 
 ![Cluster creation](./img/cluster_creation.png)
 
@@ -100,14 +101,14 @@ For **Base** model, choose the base model for the custom model that you want to 
 
 With our finetuning cluster, let's create a custom model. There are two training methods for finetuning available:
 
-- T-Few: Recommended for small datasets (100,000- samples). Also, the most typical use case here is finetuning the base model to follow a different prompt format, or follow different instructions.
-- **Vanilla**: For large datasets (100,000-1M+ samples). Usually applied for complicated semantical understanding improvement (e.g. enhancing the model's understanding about a topic). This is the recommended type of training for our finance example.
+- **T-Few**: recommended for small datasets (<100,000 samples). Also, the most typical use case here is finetuning the base model to follow a different prompt format, or follow different instructions.
+- **Vanilla**: for large datasets (>100,000-1M+ samples). Usually applied for complicated semantical understanding improvement (e.g. enhancing the model's understanding about a topic). This is the recommended type of training for our finance example.
 
 > **Note**: Using small datasets for the Vanilla method might cause overfitting. Overfitting happens when the trained model gives great results for the training data, but can't generalize outputs for unseen data. (Meaning, it didn't really learn a lot, it just hyperspecialized for the test data, but can't transfer that knowledge to all data in the dataset).
 
 ![New Model Creation](./img/new_model_2.PNG)
 
-Finally, after we select our dataset from Object Storage, we can create our model. This will take a while, as the model will be trained on the dataset we provided. In our case, this contains 67.000+ prompt-response completions. Also, we've decided to run the finetuning cluster for 5 finetuning epochs (the more epochs you specify, the more the LLM will learn and reinforce its knowledge about the content, but it will also take longer).
+Finally, after we select our dataset from Object Storage, we can create our model. This will take a while, as the model will be trained on the dataset we provided, in our case, containing *67.000+* prompt-response completions. Also, we've decided to run the finetuning cluster for 5 finetuning epochs (the more epochs you specify, the more the LLM will learn and reinforce its knowledge about the content; but it will also take longer).
 
 ![New Model last step](./img/new_model_3.PNG)
 
@@ -143,11 +144,11 @@ We can click the following button to launch it in the playground:
 
 Once we're in the playground, we can also modify the model's hyperparameters dynamically with the menu in the right side of the screen. [Have a look at these docs](https://docs.oracle.com/en-us/iaas/Content/generative-ai/concepts.htm) if you want to learn more about all customization options for the model.
 
-After selecting the newly created finance_expert (finetuned version of Cohere Light with a finetuned Q&A dataset), we can start making generations with our new LLM:
+After selecting the newly created `finance_expert`, we can start making generations with our new LLM:
 
 ![Playground - Generations](./img/playground_generations.PNG)
 
-If you're wondering why the text is highlighted, it's due to the likelihoods hyperparameters:
+If you're wondering why the text is highlighted, it's due to the "show likelihoods" hyperparameter setting:
 
 ![Likelihoods](./img/likelihoods.PNG)
 
@@ -156,6 +157,8 @@ We've successfully finetuned a model to adapt a new behavior to its knowledge ba
 ## Demo
 
 TODO
+
+[Watch the demo here](https://www.youtube.com/watch?v=XD9u5Dn04WI&list=PLPIzp-E1msraY9To-BB-vVzPsK08s4tQD&index=12)
 
 ## Tutorial
 
