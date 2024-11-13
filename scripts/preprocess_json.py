@@ -23,7 +23,8 @@ with open('../data/finance_data.json', 'r', encoding='utf-8') as file:
             "prompt": x['instruction'].replace("""'""", """"""),
             "completion": x['output'].replace("""'""", """""")     
         }
-        json_list.append(new_object)
+        if new_object['prompt'] != "" and new_object['completion'] != "":
+            json_list.append(new_object)
 
 print('Converting {} prompt-response pairs'.format(len(json_list)))
 # for every element in json_list, write everything into a txt file line by line
